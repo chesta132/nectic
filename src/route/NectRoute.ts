@@ -16,9 +16,9 @@ import {
   SupportedHandlers,
 } from "./types";
 import { NextRequest } from "next/server";
-import { NectRouteError } from "./error";
 import { zodErrorToReplyError } from "../validator/formatZod";
 import { omit, record } from "../shared";
+import { NectError } from "../error";
 
 /** @internal Not exported. Use {@link createAppRouter} or {@link createPagesRouter} instead. */
 export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHandlers, Code extends string = string> {
@@ -126,12 +126,12 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
       const context = this.createContext(req, res, { handlers, validated, nativeContext });
       return await context.next();
     } catch (err) {
-      if (err instanceof NectRouteError) {
-        return err.handle(req, res, { debugMode: this.options?.debugMode });
-      }
       const { recover } = handlerOption || {};
       if (recover) return recover(err, req, res);
-      return reply.error({ code: "SERVER_ERROR" as Code, message: "Unhandled error", information: err }).fail(500);
+      if (err instanceof NectError) {
+        return reply.error({ code: "UNHANDLED_ERROR" as Code, message: err.message, information: err.cause && omit(err.cause, ["stack"]) }).fail(500);
+      }
+      return reply.error({ code: "UNHANDLED_ERROR" as Code, message: "Unhandled error", information: err }).fail(500);
     }
   }
 
