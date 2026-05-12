@@ -27,6 +27,7 @@ function isNextRequest(req: AnyNextRequest): req is NextRequest {
 export class NectRequest<TBody = unknown> {
   private _raw: AnyNextRequest;
   private _source: NectRequestSource;
+  private _safe: Record<string, any> = {};
 
   constructor(req: AnyNextRequest) {
     this._raw = req;
@@ -259,6 +260,16 @@ export class NectRequest<TBody = unknown> {
     } catch {
       return this._raw.text() as unknown as Promise<TBody>;
     }
+  }
+
+  // ── Safe ──────────────────────────────────────────────────────────────────
+
+  get(name: string) {
+    return this._safe[name];
+  }
+
+  set(name: string, value: any) {
+    return (this._safe[name] = value);
   }
 
   // ── IP ────────────────────────────────────────────────────────────────────
