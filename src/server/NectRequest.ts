@@ -1,6 +1,7 @@
 import type { NextApiRequest } from "next";
 import type { NextRequest } from "next/server";
 import { getRawBody, parseFormData } from "./helper";
+import { NectError } from "../error";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ export class NectRequest<TBody = unknown> {
   private _raw: AnyNextRequest;
   private _source: NectRequestSource;
   private _safe: Record<string, any> = {};
+  private _body = { used: false, cache: undefined as TBody | undefined };
 
   constructor(req: AnyNextRequest) {
     this._raw = req;
@@ -235,82 +237,111 @@ export class NectRequest<TBody = unknown> {
    * - multipart/form-data (converted to object instead of FormData)
    */
   async body(): Promise<TBody> {
-    if (isNextApiRequest(this._raw)) {
-      // handle body parser = false
-      if (!this._raw.body) {
-        const contentType = this.getHeader("content-type") ?? "";
-        if (contentType.includes("application/json")) {
-          const rawBodyBuffer = await getRawBody(this._raw);
-          const bodyString = rawBodyBuffer.toString("utf-8");
-          try {
-            const body = bodyString ? JSON.parse(bodyString) : undefined;
-            this._raw.body = body;
-            return body as TBody;
-          } catch {
-            throw new Error("Error parsing JSON body");
+    if (this._body.used) {
+      return this._body.cache as TBody;
+    }
+
+    try {
+      if (isNextApiRequest(this._raw)) {
+        // handle body parser = false
+        if (!this._raw.body) {
+          const contentType = this.getHeader("content-type") ?? "";
+          if (contentType.includes("application/json")) {
+            const rawBodyBuffer = await getRawBody(this._raw);
+            const bodyString = rawBodyBuffer.toString("utf-8");
+            try {
+              const body = bodyString ? JSON.parse(bodyString) : undefined;
+              this._body = { cache: body as TBody, used: true };
+              this._raw.body = body;
+              return body as TBody;
+            } catch (err) {
+              throw new NectError("Error parsing JSON body", { cause: err });
+            }
           }
-        }
 
-        if (contentType.includes("text/")) {
-          const rawBodyBuffer = await getRawBody(this._raw);
-          const bodyString = rawBodyBuffer.toString("utf-8");
-          this._raw.body = bodyString;
-          return bodyString as unknown as TBody;
-        }
+          if (contentType.includes("text/")) {
+            const rawBodyBuffer = await getRawBody(this._raw);
+            const bodyString = rawBodyBuffer.toString("utf-8");
+            this._body = { cache: bodyString as TBody, used: true };
+            this._raw.body = bodyString;
+            return bodyString as unknown as TBody;
+          }
 
-        if (contentType.includes("application/x-www-form-urlencoded")) {
-          const rawBodyBuffer = await getRawBody(this._raw);
-          const bodyString = rawBodyBuffer.toString("utf-8");
-          const params = new URLSearchParams(bodyString);
-          const result: Record<string, string> = {};
-          params.forEach((val, key) => {
-            result[key] = val;
-          });
+          if (contentType.includes("application/x-www-form-urlencoded")) {
+            const rawBodyBuffer = await getRawBody(this._raw);
+            const bodyString = rawBodyBuffer.toString("utf-8");
+            const params = new URLSearchParams(bodyString);
+            const result: Record<string, string> = {};
+            params.forEach((val, key) => {
+              result[key] = val;
+            });
+            this._body = { cache: result as TBody, used: true };
+            this._raw.body = result;
+            return result as unknown as TBody;
+          }
+
+          if (contentType.includes("multipart/form-data")) {
+            const result = (await parseFormData(this._raw)) as TBody;
+            this._body = { cache: result as TBody, used: true };
+            this._raw.body = result;
+            return result as unknown as TBody;
+          }
+
+          const raw = await getRawBody(this._raw);
+          const result = (raw.length ? raw : undefined) as TBody;
+          this._body = { cache: result, used: true };
           this._raw.body = result;
-          return result as unknown as TBody;
+          return result;
         }
 
-        if (contentType.includes("multipart/form-data")) {
-          return (await parseFormData(this._raw)) as TBody;
+        // handled by Next.js
+        this._body = { cache: this._raw.body as TBody, used: true };
+        return this._raw.body as TBody;
+      }
+
+      const contentType = this.getHeader("content-type") ?? "";
+
+      if (contentType.includes("application/json")) {
+        const body = (await this._raw.json()) as TBody;
+        this._body = { cache: body, used: true };
+        return body;
+      }
+
+      if (contentType.includes("text/")) {
+        const body = (await this._raw.text()) as TBody;
+        this._body = { cache: body, used: true };
+        return body;
+      }
+
+      if (contentType.includes("application/x-www-form-urlencoded")) {
+        const text = await this._raw.text();
+        const params = new URLSearchParams(text);
+        const result: Record<string, string> = {};
+        params.forEach((val, key) => {
+          result[key] = val;
+        });
+        this._body = { cache: result as TBody, used: true };
+        return result as TBody;
+      }
+
+      if (contentType.includes("multipart/form-data")) {
+        const formData = await this._raw.formData();
+        const result: Record<string, any> = {};
+        for (const [key, val] of formData.entries()) {
+          result[key] = val;
         }
-
-        const raw = await getRawBody(this._raw);
-        return (raw.length ? raw : undefined) as TBody;
+        this._body = { cache: result as TBody, used: true };
+        return result as TBody;
       }
-      return this._raw.body as TBody;
+
+      const raw = await this._raw.bytes();
+      const body = (raw.length ? raw : undefined) as TBody;
+      this._body = { cache: body, used: true };
+      return body;
+    } catch (err) {
+      this._body = { cache: undefined, used: true };
+      throw new NectError("Error parsing body", { cause: err });
     }
-
-    const contentType = this.getHeader("content-type") ?? "";
-
-    if (contentType.includes("application/json")) {
-      return this._raw.json() as Promise<TBody>;
-    }
-
-    if (contentType.includes("text/")) {
-      return this._raw.text() as unknown as Promise<TBody>;
-    }
-
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      const text = await this._raw.text();
-      const params = new URLSearchParams(text);
-      const result: Record<string, string> = {};
-      params.forEach((val, key) => {
-        result[key] = val;
-      });
-      return result as unknown as Promise<TBody>;
-    }
-
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await this._raw.formData();
-      const result: Record<string, any> = {};
-      for (const [key, val] of formData.entries()) {
-        result[key] = val;
-      }
-      return result as unknown as Promise<TBody>;
-    }
-
-    const raw = await this._raw.bytes();
-    return (raw.length ? raw : undefined) as TBody;
   }
 
   // ── Safe ──────────────────────────────────────────────────────────────────
