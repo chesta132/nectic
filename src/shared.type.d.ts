@@ -47,3 +47,7 @@ type ValueOf<T> = T[keyof T];
 
 /** Promise of `T` with union of `T` */
 type PromiseOrValue<T> = T | Promise<T>;
+
+type Homogeneous<Keys extends keyof any, T> = T extends any ? Record<Keys, T> : never;
+
+type StrictHomogeneous<T extends Record<string, unknown>> = T[keyof T] extends infer V ? ({ [K in keyof T]: V } extends T ? T : never) : never;

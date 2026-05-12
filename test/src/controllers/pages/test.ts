@@ -1,5 +1,5 @@
 import { User } from "@/validator/zod";
-import { PagesRouterHandler, RouteRequest } from "../../../../dist/route";
+import { PagesRouterHandler, RouteRequest } from "#/route";
 
 export const pagePing: PagesRouterHandler = (req, res, { reply }) => {
   return reply.success("ok").ok();

@@ -4,10 +4,13 @@ import { flattenHandlers, setCors } from "./helper";
 import {
   AllowedMethod,
   AnyRouterResponse,
-  AppRouterResponse,
+  AppRouterHandler,
+  AppRouterHandlers,
   FlattenHandlers,
   HandlerOption,
   Handlers,
+  PagesRouterHandler,
+  PagesRouterHandlers,
   RouteOptions,
   RouteValidated,
   SupportedHandlers,
@@ -159,9 +162,23 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
     };
   }
 
-  toAppRouter(): Record<Method, (req: NextRequest, ctx: Record<string, any>) => PromiseOrValue<AppRouterResponse>> {
-    return record(Object.keys(this.handlers), async (req: NextRequest, nativeContext: Record<string, any>) => {
+  toAppRouter() {
+    return record(Object.keys(this.handlers) as Method[], async (req: NextRequest, nativeContext: Record<string, any>) => {
       return await this.dispatch(req, undefined, nativeContext);
     });
+  }
+
+  static pagesRouter<M extends AllowedMethod, Code extends string = string>(
+    handlers: PagesRouterHandlers,
+    options?: RouteOptions<PagesRouterHandlers<M>, Code>,
+  ) {
+    return new NectRoute<M, PagesRouterHandler, Code>(handlers, options).toPagesRouter();
+  }
+
+  static appRouter<M extends AllowedMethod, Code extends string = string>(
+    handlers: AppRouterHandlers,
+    options?: RouteOptions<AppRouterHandlers<M>, Code>,
+  ) {
+    return new NectRoute<M, AppRouterHandler, Code>(handlers, options).toAppRouter();
   }
 }

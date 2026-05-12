@@ -1,14 +1,13 @@
 import { pagePing, pagesTest } from "@/controllers/pages/test";
-import { NectRoute, RouteContext } from "../../../../../dist/route";
-import { NectRequest, NectResponse } from "../../../../../dist/server";
+import { NectRoute, PagesRouterHandler } from "#/route";
 import { user } from "@/validator/zod";
 import { appTest } from "@/controllers/app/test";
 
-export default new NectRoute(
+export default NectRoute.pagesRouter(
   {
     GET: pagePing,
-    POST: pagesTest,
-    // FALLBACK: pagesTest,
+    // POST: appTest,
+    FALLBACK: pagesTest,
   },
   {
     POST: {
@@ -17,4 +16,4 @@ export default new NectRoute(
       },
     },
   },
-).toPagesRouter();
+);

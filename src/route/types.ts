@@ -86,10 +86,11 @@ export type AnyRouterResponse = AppRouterResponse | PageRouterResponse;
 export type SupportedHandlers = AppRouterHandler<any, any, any> | PagesRouterHandler<any, any, any>;
 
 // HANDLERS
-export type Handlers<Method extends AllowedMethod, Handler extends SupportedHandlers> = Partial<Record<
-  Method | "FALLBACK",
-  AppRouterHandler<any, any, any> | AppRouterHandler<any, any, any>[] | PagesRouterHandler<any, any, any> | PagesRouterHandler<any, any, any>[]
->> // TODO: makes more strict to accept app router handler if one of them is app router handler, accpet pages router handler if none of them is app router handler
+export type Handlers<Method extends AllowedMethod, Handler extends SupportedHandlers> = Record<Method, Handler | Handler[]> & {
+  FALLBACK?: Handler | Handler[];
+};
+export type AppRouterHandlers<Method extends AllowedMethod = AllowedMethod> = Handlers<Method, AppRouterHandler>;
+export type PagesRouterHandlers<Method extends AllowedMethod = AllowedMethod> = Handlers<Method, PagesRouterHandler>;
 export type FlattenHandlers<H extends Handlers<any, any>> =
   H extends Handlers<infer Method, infer Handler> ? Partial<Record<Method | "FALLBACK", Handler[]>> : never;
 
@@ -111,7 +112,7 @@ export type RouteOptions<H extends Handlers<any, any>, C extends string> =
         statusMap?: { code: C[]; status: number }[];
         cors?: CORSOpt;
         recover?: RecoverFunc<Handler>;
-      } & Record<AllowedMethod | Method, HandlerOption<Handler>>
+      } & Partial<Record<Method, HandlerOption<Handler>> & Record<AllowedMethod, HandlerOption<Handler>>>
     : never;
 
 // OTHERS
