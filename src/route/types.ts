@@ -272,6 +272,14 @@ export type RouteOptions<H extends Handlers<any, any>, C extends string> =
       } & Partial<Record<Method, HandlerOption<Handler>> & Record<AllowedMethod, HandlerOption<Handler>>>
     : never;
 
+export type MergedOptions = {
+  debugMode?: boolean;
+  statusMap?: { code: string[]; status: number }[];
+  cors?: CORSOpt;
+  recover?: RecoverFunc<any>;
+  validator?: HandlerValidatorOption;
+};
+
 // ─── OTHERS ───────────────────────────────────────────────────────────────────
 
 /**

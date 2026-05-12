@@ -9,6 +9,7 @@ import {
   FlattenHandlers,
   HandlerOption,
   Handlers,
+  MergedOptions,
   PagesRouterHandler,
   PagesRouterHandlers,
   RouteOptions,
@@ -102,11 +103,12 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
 
     const method = req.method as AllowedMethod;
     let handlers = this.handlers[method] as Handler[] | undefined;
-    let handlerOption = this.options?.[method];
+    let handlerOptions = this.options?.[method];
     if (!handlers) {
       handlers = this.handlers["FALLBACK" as Method] as Handler[] | undefined;
-      if (!handlerOption) handlerOption = this.options?.FALLBACK;
+      if (!handlerOptions) handlerOptions = this.options?.FALLBACK;
     }
+    const options: MergedOptions = { ...this.options, ...handlerOptions };
 
     try {
       if (!handlers) {
@@ -115,7 +117,7 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
 
       await this.handleCORS(req, res);
 
-      const validated = await this.handleValidator(req, { handlerOption, nativeContext });
+      const validated = await this.handleValidator(req, { handlerOptions, nativeContext });
       if ("code" in validated) {
         return reply
           .error(omit(validated, ["debug"]) as ErrorReplyType<Code>)
@@ -126,7 +128,7 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
       const context = this.createContext(req, res, { handlers, validated, nativeContext });
       return await context.next();
     } catch (err) {
-      const { recover } = handlerOption || {};
+      const { recover } = options;
       if (recover) return recover(err, req, res);
       if (err instanceof NectError) {
         return reply.error({ code: "UNHANDLED_ERROR" as Code, message: err.message, information: err.cause && omit(err.cause, ["stack"]) }).fail(500);
@@ -179,7 +181,7 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
   }
 
   /**
-   * Runs request validation using the Zod schemas configured in `handlerOption.validator`.
+   * Runs request validation using the Zod schemas configured in `handlerOptions.validator`.
    * Validates body, param, and query independently.
    *
    * Param source differs by router type:
@@ -187,17 +189,17 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
    * - Pages Router → read from `req.query`
    *
    * @param req - NectRequest object
-   * @param options.handlerOption - Handler options containing the validator config
+   * @param options.handlerOptions - Handler options containing the validator config
    * @param options.nativeContext - Native framework context (used to distinguish App vs Pages Router)
    * @returns A `RouteValidated` object if all fields pass, or an error object if any fail
    */
   private async handleValidator(
     req: NectRequest,
-    { handlerOption, nativeContext }: { handlerOption?: HandlerOption<SupportedHandlers>; nativeContext?: Record<string, any> },
+    { handlerOptions, nativeContext }: { handlerOptions?: HandlerOption<SupportedHandlers>; nativeContext?: Record<string, any> },
   ) {
     const validated: RouteValidated = { body: undefined, param: {}, query: {} };
-    if (handlerOption?.validator) {
-      const { body, param, query } = handlerOption.validator;
+    if (handlerOptions?.validator) {
+      const { body, param, query } = handlerOptions.validator;
       if (body) {
         const result = body.safeParse(await req.body());
         if (result.success) {
