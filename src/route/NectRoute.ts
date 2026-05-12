@@ -157,6 +157,7 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
         case "function":
           const result = await cors(req.headers.origin);
           if (result) setCors(req, res, { availableMethods, ...(result === true ? {} : result) });
+          else setCors(req, res, { availableMethods, origin: "null" });
           break;
         case "string":
           setCors(req, res, { availableMethods, origin: cors });
