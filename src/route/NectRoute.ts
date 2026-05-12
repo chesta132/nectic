@@ -166,7 +166,11 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
           setCors(req, res, { availableMethods });
           break;
         case "object":
-          setCors(req, res, { availableMethods, ...cors });
+          if (Array.isArray(cors)) {
+            setCors(req, res, { availableMethods, origin: cors.join(", ") });
+          } else {
+            setCors(req, res, { availableMethods, ...cors });
+          }
           break;
         default:
           break;

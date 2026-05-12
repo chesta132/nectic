@@ -290,7 +290,8 @@ export type CORSObjOpt = {
  *
  * - `true` → allow all origins
  * - `string` → allow a specific origin
+ * - `string[]` → allow a multiple specific origin
  * - `CORSFunc` → dynamic per-request evaluation
  * - `CORSObjOpt` → static object config
  */
-export type CORSOpt = boolean | string | CORSFunc | CORSObjOpt;
+export type CORSOpt = boolean | string | CORSFunc | CORSObjOpt | string[];
