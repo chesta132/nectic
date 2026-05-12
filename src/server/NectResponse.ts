@@ -1,6 +1,7 @@
 import type { NextApiResponse } from "next";
 import { NextResponse } from "next/server";
 import { serialize, type SerializeOptions } from "cookie";
+import { NectError } from "../error";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export class NectResponse<TBody = unknown> {
    */
   get raw(): NextApiResponse {
     if (!this._raw) {
-      throw new Error("[NectResponse] .raw is only available on the pages router.");
+      throw new NectError(".raw is only available on the pages router.");
     }
     return this._raw;
   }

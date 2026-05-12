@@ -40,7 +40,7 @@ export class NectRequest<TBody = unknown> {
     } else if (isNextRequest(req)) {
       this._source = "app";
     } else {
-      throw new Error("[NectRequest] Unrecognized request type. Must be NextApiRequest or NextRequest.");
+      throw new NectError("Unrecognized request type. Must be NextApiRequest or NextRequest.");
     }
   }
 

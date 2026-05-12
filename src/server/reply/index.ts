@@ -3,6 +3,7 @@ import type { SerializeOptions } from "cookie";
 import type { NectRequest } from "../NectRequest";
 import type { NectResponse, NectSendResult } from "../NectResponse";
 import type { ReplyEnvelope, ErrorReplyType, PaginationOption, Cookie, ReplyOption } from "./types";
+import { NectError } from "../../error";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -161,7 +162,7 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
       for (const key in keyOrCookies) {
         const { value, ...opts } = keyOrCookies[key];
         this.res.setCookie(key, value, opts);
-        this.req.url
+        this.req.url;
       }
     }
     return this;
@@ -301,7 +302,7 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
    */
   fail(httpStatus?: number): NectSendResult {
     const errorBody = this.errorData;
-    if (!errorBody) throw new Error("[Reply] Cannot call .fail() — no error set. Call .error() first.");
+    if (!errorBody) throw new NectError("Cannot call .fail() — no error set. Call .error() first.");
     this._finalize(false);
 
     const status = httpStatus ?? this.opt.statusMap?.find((s) => s.code.includes(errorBody.code))?.status ?? 500;
