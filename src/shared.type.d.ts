@@ -44,3 +44,6 @@ type MergeUnion<U> = (U extends any ? (k: U) => void : never) extends (k: infer 
 
 /** Value of `T` */
 type ValueOf<T> = T[keyof T];
+
+/** Promise of `T` with union of `T` */
+type PromiseOrValue<T> = T | Promise<T>;

@@ -9,14 +9,23 @@
     ".": {
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
+      "default": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
     },
     "./server": {
       "import": "./dist/server/index.mjs",
       "require": "./dist/server/index.js",
+      "default": "./dist/server/index.mjs",
       "types": "./dist/server/index.d.ts"
+    },
+    "./route": {
+      "import": "./dist/route/index.mjs",
+      "require": "./dist/route/index.js",
+      "default": "./dist/route/index.mjs",
+      "types": "./dist/route/index.d.ts"
     }
   },
+  "type": "module",
   "files": [
     "dist"
   ],
