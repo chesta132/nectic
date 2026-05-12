@@ -167,18 +167,18 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
       return await this.dispatch(req, undefined, nativeContext);
     });
   }
-
-  static pagesRouter<M extends AllowedMethod, Code extends string = string>(
-    handlers: PagesRouterHandlers,
-    options?: RouteOptions<PagesRouterHandlers<M>, Code>,
-  ) {
-    return new NectRoute<M, PagesRouterHandler, Code>(handlers, options).toPagesRouter();
-  }
-
-  static appRouter<M extends AllowedMethod, Code extends string = string>(
-    handlers: AppRouterHandlers,
-    options?: RouteOptions<AppRouterHandlers<M>, Code>,
-  ) {
-    return new NectRoute<M, AppRouterHandler, Code>(handlers, options).toAppRouter();
-  }
 }
+
+export const createPagesRouter = <M extends AllowedMethod, Code extends string = string>(
+  handlers: PagesRouterHandlers,
+  options?: RouteOptions<PagesRouterHandlers<M>, Code>,
+) => {
+  return new NectRoute<M, PagesRouterHandler, Code>(handlers, options).toPagesRouter();
+};
+
+export const createAppRouter = <M extends AllowedMethod, Code extends string = string>(
+  handlers: AppRouterHandlers,
+  options?: RouteOptions<AppRouterHandlers<M>, Code>,
+) => {
+  return new NectRoute<M, AppRouterHandler, Code>(handlers, options).toAppRouter();
+};

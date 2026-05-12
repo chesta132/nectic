@@ -1,8 +1,8 @@
-import { NectRoute } from "#/route";
+import { createAppRouter } from "#/route";
 import { appPing, appTest } from "@/controllers/app/test";
 import { user } from "@/validator/zod";
 
-export const { POST, GET } = NectRoute.appRouter(
+export const { POST, GET } = createAppRouter(
   {
     POST: appTest,
     GET: appPing,

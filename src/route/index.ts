@@ -1,4 +1,4 @@
-export { NectRoute } from "./NectRoute";
+export { createAppRouter, createPagesRouter } from "./NectRoute";
 
 export type {
   AnyRouterResponse,
