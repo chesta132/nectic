@@ -1,5 +1,6 @@
 import type { NextApiRequest } from "next";
 import type { NextRequest } from "next/server";
+import { getRawBody, parseFormData } from "./helper";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -221,16 +222,61 @@ export class NectRequest<TBody = unknown> {
   // ── Body ──────────────────────────────────────────────────────────────────
 
   /**
-   * Returns the body as parsed by Next.js.
+   * Returns the body as parsed by Next.js or by NectRequest. Fallback to return binary and undefined if empty binary
    *
    * - Pages (`NextApiRequest`): returns `req.body` synchronously (already parsed by Next.js bodyParser)
-   * - App (`NextRequest`): returns a **Promise** that resolves to parsed JSON or text
+   *   or returns a **Promise** if Next.js bodyParser is false
+   * - App (`NextRequest`): returns a **Promise** that resolves parsing
    *
-   * Use `await nectReq.body()` consistently for both — if pages returns a non-promise,
-   * it's still safe to `await` it.
+   * Supported headers:
+   * - application/json
+   * - text/*
+   * - application/x-www-form-urlencoded
+   * - multipart/form-data (converted to object instead of FormData)
    */
   async body(): Promise<TBody> {
     if (isNextApiRequest(this._raw)) {
+      // handle body parser = false
+      if (!this._raw.body) {
+        const contentType = this.getHeader("content-type") ?? "";
+        if (contentType.includes("application/json")) {
+          const rawBodyBuffer = await getRawBody(this._raw);
+          const bodyString = rawBodyBuffer.toString("utf-8");
+          try {
+            const body = bodyString ? JSON.parse(bodyString) : undefined;
+            this._raw.body = body;
+            return body as TBody;
+          } catch {
+            throw new Error("Error parsing JSON body");
+          }
+        }
+
+        if (contentType.includes("text/")) {
+          const rawBodyBuffer = await getRawBody(this._raw);
+          const bodyString = rawBodyBuffer.toString("utf-8");
+          this._raw.body = bodyString;
+          return bodyString as unknown as TBody;
+        }
+
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+          const rawBodyBuffer = await getRawBody(this._raw);
+          const bodyString = rawBodyBuffer.toString("utf-8");
+          const params = new URLSearchParams(bodyString);
+          const result: Record<string, string> = {};
+          params.forEach((val, key) => {
+            result[key] = val;
+          });
+          this._raw.body = result;
+          return result as unknown as TBody;
+        }
+
+        if (contentType.includes("multipart/form-data")) {
+          return (await parseFormData(this._raw)) as TBody;
+        }
+
+        const raw = await getRawBody(this._raw);
+        return (raw.length ? raw : undefined) as TBody;
+      }
       return this._raw.body as TBody;
     }
 
@@ -254,12 +300,17 @@ export class NectRequest<TBody = unknown> {
       return result as unknown as Promise<TBody>;
     }
 
-    // Fallback: try JSON, then text
-    try {
-      return this._raw.clone().json() as Promise<TBody>;
-    } catch {
-      return this._raw.text() as unknown as Promise<TBody>;
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await this._raw.formData();
+      const result: Record<string, any> = {};
+      for (const [key, val] of formData.entries()) {
+        result[key] = val;
+      }
+      return result as unknown as Promise<TBody>;
     }
+
+    const raw = await this._raw.bytes();
+    return (raw.length ? raw : undefined) as TBody;
   }
 
   // ── Safe ──────────────────────────────────────────────────────────────────
