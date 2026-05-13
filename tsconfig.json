@@ -10,6 +10,6 @@
     "rootDir": "src",
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src", "src/shared.type.d.ts"],
+  "include": ["src", "src/shared.type.ts"],
   "exclude": ["node_modules", "dist"]
 }

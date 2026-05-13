@@ -1,8 +1,8 @@
 import { omit } from "../shared";
 import { zodErrorToReplyError } from "../validator/formatZod";
 import { Outcome } from "./outcome";
-import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, ActionValidator, InferZodTypeInArray } from "./types";
-import { IsUnknown } from "../shared.type";
+import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, ActionValidator } from "./types";
+import { InferZodTypeInArray, IsUnknown } from "../shared.type";
 
 export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extends any[] = unknown[], ReturnType = unknown> {
   private middlewares: ActionMiddlewareFunc<ValidatedArgs, ReturnType>[] = [];

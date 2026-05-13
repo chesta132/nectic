@@ -1,4 +1,4 @@
-import z, { ZodType } from "zod";
+import { ZodType } from "zod";
 import { Outcome } from "./outcome";
 import { OutcomeSendResult } from "./outcome/types";
 import { PromiseOrValue } from "../shared.type";
@@ -32,8 +32,9 @@ export type ActionValidator = {
   readonly args: ZodType[];
 };
 
-export type InferZodTypeInArray<Z extends ZodType[]> = Z extends [infer First, ...infer Rest]
-  ? First extends ZodType
-    ? [z.infer<First>, ...InferZodTypeInArray<Rest extends ZodType[] ? Rest : []>]
-    : []
-  : [];
+export type NectActionFunc<Args extends any[] = unknown[], Result = unknown> = (...args: Args) => Promise<OutcomeSendResult<Result>>;
+
+export type NectActionOption<Args extends any[] = unknown[], Result = unknown, Safe extends boolean = boolean> = {
+  action: NectActionFunc<Args, Result>;
+  safe?: Safe;
+};
