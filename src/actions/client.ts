@@ -52,11 +52,16 @@ export const nectAction = async <Args extends any[] = unknown[], Result = unknow
   { action, unsafe }: NectActionOption<Args, Result, Unsafe>,
   ...args: Args
 ): Promise<Unsafe extends true ? OutcomeEnvelope<Exclude<Result, ErrorOutcomeType>, true> : OutcomeEnvelope<Result | ErrorOutcomeType, boolean>> => {
-  const result = await action(...args);
+  try {
+    const result = await action(...args);
 
-  if (result.meta.status === "ERROR" && unsafe) {
-    throw new NectOutcomeError(result as OutcomeEnvelope<ErrorOutcomeType, false>);
+    if (result.meta.status === "ERROR" && unsafe) {
+      throw new NectOutcomeError(result as OutcomeEnvelope<ErrorOutcomeType, false>);
+    }
+
+    return result as any;
+  } catch (err) {
+    if (unsafe) throw err;
+    return { meta: { status: "ERROR" }, data: { code: "UNHANDLED_ERROR", message: "Unhandled error", information: { err } } } as any;
   }
-
-  return result as any;
 };
