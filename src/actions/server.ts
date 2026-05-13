@@ -47,7 +47,7 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
     return { ...ctx, next };
   }
 
-  private dispatch(...args: ArgsType) {
+  private async dispatch(...args: ArgsType) {
     const ctx = this.createContext(args);
     if (ctx.error) {
       return ctx.outcome
@@ -55,7 +55,11 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
         .debug(ctx.error.debug)
         .fail();
     }
-    return ctx.next();
+    try {
+      return await ctx.next();
+    } catch (err) {
+      return ctx.outcome.error({ code: "UNHANDLED_ERROR", message: "Unhandled error" }).debug(err).fail();
+    }
   }
 
   clone() {
