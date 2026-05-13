@@ -34,7 +34,7 @@ export type ActionValidator = {
 
 export type NectActionFunc<Args extends any[] = unknown[], Result = unknown> = (...args: Args) => Promise<OutcomeSendResult<Result>>;
 
-export type NectActionOption<Args extends any[] = unknown[], Result = unknown, Safe extends boolean = boolean> = {
+export type NectActionOption<Args extends any[] = unknown[], Result = unknown, Unsafe extends boolean = boolean> = {
   action: NectActionFunc<Args, Result>;
-  safe?: Safe;
+  unsafe?: Unsafe;
 };

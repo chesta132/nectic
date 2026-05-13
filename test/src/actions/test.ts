@@ -9,5 +9,5 @@ export const actionTest = createNectAction()
   // .handle(({ outcome, validated }, user: User) => {
   //   return outcome.success(validated[0]).ok();
   // });
-  .use(actionTestMw)
+  // .use(actionTestMw)
   .handle(actionTestFunc);
