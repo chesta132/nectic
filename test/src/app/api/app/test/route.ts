@@ -1,10 +1,11 @@
 import { createAppRouter } from "#/route";
-import { appPing, appTest } from "@/controllers/app/test";
+import { appPing, appTest, appTestWithNext } from "@/controllers/app/test";
+import { pagesTestWithNext } from "@/controllers/pages/test";
 import { user } from "@/validator/zod";
 
 export const { POST, GET } = createAppRouter(
   {
-    POST: appTest,
+    POST: [appTestWithNext, appTest],
     GET: appPing,
   },
   {

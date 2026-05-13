@@ -324,8 +324,8 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
  * });
  */
 export const createPagesRouter = <M extends AllowedMethod, Code extends string = string>(
-  handlers: PagesRouterHandlers,
-  options?: RouteOptions<PagesRouterHandlers<M>, Code>,
+  handlers: PagesRouterHandlers<M>,
+  options?: RouteOptions<Handlers<M, PagesRouterHandler>, Code>,
 ) => {
   return new NectRoute<M, PagesRouterHandler, Code>(handlers, options).toPagesRouter();
 };
@@ -389,8 +389,8 @@ export const createPagesRouter = <M extends AllowedMethod, Code extends string =
  * });
  */
 export const createAppRouter = <M extends AllowedMethod, Code extends string = string>(
-  handlers: AppRouterHandlers,
-  options?: RouteOptions<AppRouterHandlers<M>, Code>,
+  handlers: AppRouterHandlers<M>,
+  options?: RouteOptions<Handlers<M, AppRouterHandler>, Code>,
 ) => {
   return new NectRoute<M, AppRouterHandler, Code>(handlers, options).toAppRouter();
 };
