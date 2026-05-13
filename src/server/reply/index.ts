@@ -248,6 +248,21 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
   }
 
   /**
+   * Send a success JSON response.
+   *
+   * @example
+   * ```ts
+   * return reply.success(null).send(202)
+   * ```
+   */
+  send(httpStatus: number): NectSendResult {
+    this._finalize(true);
+    const result = this.res.json(httpStatus, this.payload as any);
+    this._reset();
+    return result;
+  }
+
+  /**
    * Send a `200 OK` JSON response.
    *
    * @example
