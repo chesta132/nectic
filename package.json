@@ -23,6 +23,12 @@
       "require": "./dist/route/index.js",
       "default": "./dist/route/index.mjs",
       "types": "./dist/route/index.d.ts"
+    },
+    "./actions": {
+      "import": "./dist/actions/index.mjs",
+      "require": "./dist/actions/index.js",
+      "default": "./dist/actions/index.mjs",
+      "types": "./dist/actions/index.d.ts"
     }
   },
   "type": "module",

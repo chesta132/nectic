@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { NectRequest, NectResponse, NectSendResult, Reply } from "../server";
 import { ZodObject, ZodType } from "zod";
+import { PromiseOrValue } from "../shared.type";
 
 // ─── METHOD ───────────────────────────────────────────────────────────────────
 
