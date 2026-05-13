@@ -1,7 +1,7 @@
 {
-  "name": "nect",
+  "name": "nectify-js",
   "version": "1.0.0",
-  "description": "",
+  "description": "A lightweight, type-safe Next.js utility library for building API routes and server actions — supports both App Router and Pages Router.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -39,8 +39,16 @@
     "build": "tsup",
     "dev": "tsup --watch"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nect-js",
+    "nect",
+    "nextjs-lib",
+    "http-lib",
+    "wrapper",
+    "chesta",
+    "chesta132"
+  ],
+  "author": "chesta132",
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "devDependencies": {

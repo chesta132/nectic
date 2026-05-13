@@ -1,4 +1,4 @@
-# nect
+# nectify-js
 
 A lightweight, type-safe Next.js utility library for building API routes and server actions — supports both **App Router** and **Pages Router**.
 
@@ -18,9 +18,9 @@ A lightweight, type-safe Next.js utility library for building API routes and ser
 ## Installation
 
 ```bash
-pnpm add nect zod
+pnpm add nectify-js zod
 # or
-npm install nect zod
+npm install nectify-js zod
 ```
 
 > **Peer dependencies:** `next >= 16.2.6`, `zod >= 4.4.3`
@@ -33,7 +33,7 @@ npm install nect zod
 
 ```ts
 // app/api/user/route.ts
-import { createAppRouter } from "nect/route";
+import { createAppRouter } from "nectify-js/route";
 
 export const { GET, POST } = createAppRouter({
   GET: async (req, res, ctx) => {
@@ -49,7 +49,7 @@ export const { GET, POST } = createAppRouter({
 
 ```ts
 // pages/api/user.ts
-import { createPagesRouter } from "nect/route";
+import { createPagesRouter } from "nectify-js/route";
 
 export default createPagesRouter({
   GET: async (req, res, ctx) => {
@@ -219,7 +219,7 @@ createAppRouter(
 Catch unhandled errors globally or per method:
 
 ```ts
-import { Reply } from "nect/server";
+import { Reply } from "nectify-js/server";
 
 export const { GET } = createAppRouter(
   { GET: handler },
@@ -235,13 +235,13 @@ export const { GET } = createAppRouter(
 
 ## Server Actions
 
-`nect` also supports Next.js **Server Actions** via `nect/actions`.
+`nectify-js` also supports Next.js **Server Actions** via `nectify-js/actions`.
 
 ### Creating an Action
 
 ```ts
 // actions/user.ts
-import { createNectAction } from "nect/actions";
+import { createNectAction } from "nectify-js/actions";
 import { z } from "zod";
 
 export const getUser = createNectAction().handle(({ outcome }, id: string) => {
@@ -263,7 +263,7 @@ export const createUser = createNectAction()
 ### Calling an Action (Client Side)
 
 ```ts
-import { nectAction } from "nect/actions";
+import { nectAction } from "nectify-js/actions";
 
 // Safe mode — always returns, check status manually
 const result = await nectAction({ action: getUser }, "user-123");
@@ -312,12 +312,12 @@ try {
 
 ## Package Exports
 
-| Import path    | Contents                                                              |
-| -------------- | --------------------------------------------------------------------- |
-| `nect`         | `NectError`                                                           |
-| `nect/route`   | `createAppRouter`, `createPagesRouter`                                |
-| `nect/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse` |
-| `nect/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError` |
+| Import path       | Contents                                                              |
+| ----------------- | --------------------------------------------------------------------- |
+| `nectify-js`         | `NectError`                                                           |
+| `nectify-js/route`   | `createAppRouter`, `createPagesRouter`                                |
+| `nectify-js/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse` |
+| `nectify-js/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError` |
 
 ---
 
