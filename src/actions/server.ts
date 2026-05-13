@@ -4,6 +4,43 @@ import { Outcome } from "./outcome";
 import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, ActionValidator } from "./types";
 import { InferZodTypeInArray, IsUnknown } from "../shared.type";
 
+/**
+ * The core server-side action builder.
+ *
+ * `NectAction` follows a fluent, immutable builder pattern — every method returns
+ * a cloned instance so you can safely branch and reuse configurations.
+ *
+ * **Typical usage:**
+ * 1. Create a base action with `createNectAction()`
+ * 2. Optionally configure via `.option()` (debug mode, Zod validators)
+ * 3. Optionally attach middleware via `.use()` (runs before the handler)
+ * 4. Finalize with `.handle()` — returns the dispatchable action function
+ *
+ * @template ArgsType - Tuple of raw argument types the action accepts
+ * @template ValidatedArgs - Tuple of Zod-validated argument types (set by `.option()`)
+ * @template ReturnType - The expected success data type of the action
+ *
+ * @example
+ * ```ts
+ * // Basic action — no validation, no middleware
+ * export const getUser = createNectAction()
+ *   .handle(({ outcome }, id: string) => {
+ *     return outcome.success({ id }).ok();
+ *   });
+ *
+ * // With Zod validation and middleware
+ * export const createUser = createNectAction()
+ *   .option({ validator: { args: [z.object({ name: z.string() })] } })
+ *   .use(async ({ next, set, validated: [user] }) => {
+ *     set("role", "admin");
+ *     return await next();
+ *   })
+ *   .handle(({ outcome, validated: [user], get }) => {
+ *     const role = get("role");
+ *     return outcome.success({ ...user, role }).ok();
+ *   });
+ * ```
+ */
 export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extends any[] = unknown[], ReturnType = unknown> {
   private middlewares: ActionMiddlewareFunc<ValidatedArgs, ReturnType>[] = [];
   private handler?: ActionFunc<ArgsType, ValidatedArgs, ReturnType>;
@@ -62,18 +99,71 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
     }
   }
 
+  /**
+   * Returns a shallow clone of this `NectAction` instance.
+   * Used internally to ensure immutability across the builder chain.
+   *
+   * @returns A new `NectAction` with the same middlewares, handler, and options
+   */
   clone() {
     const cloned = new NectAction(this.middlewares, this.handler);
     cloned.opt = this.opt;
     return cloned;
   }
 
+  /**
+   * Configure options for this action — debug mode and/or Zod argument validators.
+   * Merges with any existing options and returns a new cloned instance.
+   *
+   * When `validator.args` is provided, each schema validates the corresponding argument
+   * positionally. Validated values are available in the handler/middleware via `ctx.validated`.
+   *
+   * @template V - The validator type (used to infer `ValidatedArgs` generics)
+   * @param opt - Options to apply: `debugMode` and/or `validator`
+   * @returns A new `NectAction` instance with updated options and inferred `ValidatedArgs`
+   *
+   * @example
+   * ```ts
+   * const action = createNectAction()
+   *   .option({
+   *     debugMode: true,
+   *     validator: { args: [z.object({ name: z.string() })] as const },
+   *   })
+   *   .handle(({ outcome, validated: [user] }) => {
+   *     return outcome.success(user).ok(); // user is { name: string }
+   *   });
+   * ```
+   */
   option<V extends ActionValidator>(opt: ActionOption<V>) {
     const cloned = this.clone() as unknown as NectAction<ArgsType, InferZodTypeInArray<V["args"]>, ReturnType>;
     cloned.opt = { ...cloned.opt, ...opt };
     return cloned;
   }
 
+  /**
+   * Attach a middleware to the action chain.
+   * Middleware runs before the final handler and receives `ctx.next()` to continue the chain.
+   *
+   * Multiple `.use()` calls stack in order — the first registered runs first.
+   * Returns a new cloned instance with the middleware appended.
+   *
+   * @template NewReturnType - The return type contributed by this middleware
+   * @param middleware - The middleware function to attach
+   * @returns A new `NectAction` instance with the middleware added
+   *
+   * @example
+   * ```ts
+   * const action = createNectAction()
+   *   .use(async ({ next, set, validated: [user] }) => {
+   *     set("role", await fetchRole(user.id));
+   *     return await next();
+   *   })
+   *   .handle(({ outcome, get }) => {
+   *     const role = get("role") as string;
+   *     return outcome.success({ role }).ok();
+   *   });
+   * ```
+   */
   use<NewReturnType = unknown>(middleware: ActionMiddlewareFunc<ValidatedArgs, NewReturnType>) {
     const cloned = this.clone();
     cloned.middlewares.push(middleware as any);
@@ -85,6 +175,33 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
     >;
   }
 
+  /**
+   * Finalize the action with a handler function and return the dispatchable action.
+   *
+   * Calling `.handle()` locks the builder — it returns a plain async function
+   * (not a `NectAction`) that can be called directly or passed to `nectAction()`.
+   *
+   * The handler receives `ActionContext` (without `next`) and the raw action arguments.
+   * It must return a result from `outcome.ok()`, `outcome.fail()`, or `outcome.respond()`.
+   *
+   * @template NewArgsType - Tuple of raw argument types the action accepts
+   * @template NewReturnType - The expected success data type
+   * @param handler - The final handler function
+   * @returns A bound async function `(...args: NewArgsType) => Promise<OutcomeSendResult<NewReturnType>>`
+   *
+   * @example
+   * ```ts
+   * export const getUser = createNectAction()
+   *   .option({ validator: { args: [z.string()] as const } })
+   *   .handle(({ outcome, validated: [id] }, rawId) => {
+   *     if (!id) return outcome.error({ code: "NOT_FOUND", message: "User not found" }).fail();
+   *     return outcome.success({ id }).ok();
+   *   });
+   *
+   * // Call it directly
+   * const result = await getUser("user-123");
+   * ```
+   */
   handle<NewArgsType extends any[] = unknown[], NewReturnType = unknown>(handler: ActionFunc<NewArgsType, ValidatedArgs, NewReturnType>) {
     const cloned = this.clone() as unknown as NectAction<
       NewArgsType,
@@ -97,6 +214,28 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
   }
 }
 
+/**
+ * Creates a fresh `NectAction` builder instance.
+ *
+ * This is the entry point for defining server actions in Nect.
+ * Chain `.option()`, `.use()`, and `.handle()` to build the action.
+ *
+ * @returns A new `NectAction` instance with no options, middlewares, or handler
+ *
+ * @example
+ * ```ts
+ * // Minimal action
+ * export const ping = createNectAction()
+ *   .handle(({ outcome }) => outcome.success({ pong: true }).ok());
+ *
+ * // With validation
+ * export const createPost = createNectAction()
+ *   .option({ validator: { args: [z.object({ title: z.string() })] as const } })
+ *   .handle(({ outcome, validated: [post] }) => {
+ *     return outcome.success({ id: "new-id", ...post }).ok();
+ *   });
+ * ```
+ */
 export const createNectAction = () => {
   return new NectAction();
 };
