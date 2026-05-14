@@ -1,4 +1,4 @@
-import { User } from "@/validator/zod";
+import { Transform, TransformInput, User } from "@/validator/zod";
 import { ActionFunc, ActionMiddlewareFunc } from "#/actions";
 
 export const actionTestMw: ActionMiddlewareFunc<[user: User], { user: User; validated: User }> = async ({
@@ -27,5 +27,9 @@ export const actionTestFunc: ActionFunc<[user: User], [user: User], { user: User
 };
 
 export const actionTestFuncZeroArgs: ActionFunc<[], [], { success: boolean; user: User }> = ({ outcome }) => {
+  return outcome.success({ success: true, user: { id: 123, username: "1234" } }).ok();
+};
+
+export const actionTestFuncTransform: ActionFunc<[TransformInput], [Transform], { success: boolean; user: User }> = ({ outcome }) => {
   return outcome.success({ success: true, user: { id: 123, username: "1234" } }).ok();
 };

@@ -2,7 +2,7 @@ import { omit } from "../shared";
 import { zodErrorToReplyError } from "../validator/formatZod";
 import { Outcome } from "./outcome";
 import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, NectActionFunc, NectActionFuncInternalArgs } from "./types";
-import { InferZodTypeInArray, IsUnknown } from "../shared.type";
+import { InferZodTypeInArray, InputZodTypeInArray, IsUnknown } from "../shared.type";
 import { ZodType } from "zod";
 import { excludeUnserializable } from "./helper";
 
@@ -157,7 +157,7 @@ export class NectAction<ArgsType extends readonly any[] = readonly unknown[], Va
    * ```
    */
   validate<V extends readonly ZodType[]>(validator: readonly [...V]) {
-    const clonned = this.clone() as unknown as NectAction<[...InferZodTypeInArray<V>, ...unknown[]], InferZodTypeInArray<V>, ReturnType>;
+    const clonned = this.clone() as unknown as NectAction<[...InputZodTypeInArray<V>, ...unknown[]], InferZodTypeInArray<V>, ReturnType>;
     clonned.validator = validator as any;
     return clonned;
   }

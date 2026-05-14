@@ -11,37 +11,11 @@ export type InferZodTypeInArray<Z extends readonly ZodType[]> = Z extends [infer
     : []
   : [];
 
-export type IsPrefixOf<Prefix extends readonly any[], Full extends readonly any[]> = Prefix extends readonly []
-  ? true
-  : Full extends readonly []
-    ? false
-    : Prefix extends readonly [infer PHead, ...infer PTail]
-      ? Full extends readonly [infer FHead, ...infer FTail]
-        ? [PHead] extends [FHead]
-          ? PTail extends readonly any[]
-            ? FTail extends readonly any[]
-              ? IsPrefixOf<PTail, FTail>
-              : false
-            : false
-          : false
-        : false
-      : false;
-
-type IsSerializable<T> = T extends string | number | boolean | null | undefined
-  ? true
-  : T extends Function
-    ? false
-    : T extends symbol
-      ? false
-      : T extends bigint
-        ? false
-        : T extends Array<infer Item>
-          ? IsSerializable<Item>
-          : T extends object
-            ? { [K in keyof T]-?: IsSerializable<T[K]> }[keyof T] extends false
-              ? false
-              : true
-            : false;
+export type InputZodTypeInArray<Z extends readonly ZodType[]> = Z extends [infer First, ...infer Rest]
+  ? First extends ZodType
+    ? [z.input<First>, ...InferZodTypeInArray<Rest extends ZodType[] ? Rest : []>]
+    : []
+  : [];
 
 export type ExcludeUnserializable<T> = T extends string | number | boolean | null | undefined
   ? T

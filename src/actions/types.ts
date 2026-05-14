@@ -1,7 +1,6 @@
-import { ZodType } from "zod";
 import { Outcome } from "./outcome";
 import { OutcomeSendResult } from "./outcome/types";
-import { IsPrefixOf, PromiseOrValue } from "../shared.type";
+import { PromiseOrValue } from "../shared.type";
 
 /**
  * Context object passed to every action handler and middleware.
@@ -136,9 +135,9 @@ export type ActionFunc<
   ValidatedArgs extends readonly any[] = readonly unknown[],
   ReturnType = unknown,
 > =
-  IsPrefixOf<ValidatedArgs, ArgsType> extends true
-    ? (ctx: ActionContext<ValidatedArgs, ReturnType>, ...args: ArgsType) => PromiseOrValue<OutcomeSendResult<ReturnType>>
-    : { __error: "ValidatedArgs must be a prefix of ArgsType" };
+  // remove validation is ValidatedArgs prefix of ArgsType
+  // that validation run on .handle()
+  (ctx: ActionContext<ValidatedArgs, ReturnType>, ...args: ArgsType) => PromiseOrValue<OutcomeSendResult<ReturnType>>;
 
 /**
  * Configuration options for a `NectAction` instance.

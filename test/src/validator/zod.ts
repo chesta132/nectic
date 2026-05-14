@@ -8,3 +8,11 @@ export const user = z
   .strip();
 
 export type User = z.infer<typeof user>;
+
+export const transfom = z
+  .object({
+    stringToNumber: z.string().transform((val) => parseInt(val)),
+  })
+  .strict();
+export type Transform = z.infer<typeof transfom>;
+export type TransformInput = z.input<typeof transfom>;
