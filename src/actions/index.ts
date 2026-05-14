@@ -13,5 +13,5 @@ export type {
 export { createOutcome } from "./outcome";
 export type { ErrorOutcomeType, OutcomeEnvelope, OutcomeOption, OutcomeSendResult, Pagination, PaginationOption } from "./outcome/types";
 
-export { nectAction } from "./client";
+export { nectAction, isNectOutcomeError, isOutcomeError, isOutcomeSuccess } from "./client";
 export { NectOutcomeError } from "./error";

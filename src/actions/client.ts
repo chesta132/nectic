@@ -77,3 +77,11 @@ export const nectAction = async <
 };
 
 type WrapFromCSR<T, FromCSR> = [FromCSR] extends [true] ? ExcludeUnserializable<T> : T;
+
+/** Check is `result` error in envelope */
+export const isOutcomeError = <T>(result: OutcomeEnvelope<T>): result is OutcomeEnvelope<ErrorOutcomeType, false> => result.meta.status === "ERROR";
+/** Check is `result` success in envelope */
+export const isOutcomeSuccess = <T>(result: OutcomeEnvelope<T>): result is OutcomeEnvelope<Exclude<T, ErrorOutcomeType>, true> =>
+  result.meta.status === "SUCCESS";
+/** Check is `err` is NectOutcomeError instance */
+export const isNectOutcomeError = (err: any): err is NectOutcomeError => err instanceof NectOutcomeError;

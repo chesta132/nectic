@@ -23,26 +23,52 @@ export interface ErrorReplyType<C extends string = string> {
   information?: any;
 }
 
+// export interface ReplyEnvelope<T, Success extends boolean = boolean> {
+//   meta: {
+//     /** Optional debug values */
+//     debug?: any[];
+//     /** Status of response (SUCCESS/ERROR) */
+//     status: Success extends true ? "SUCCESS" : "ERROR";
+//   } & (Success extends true
+//     ? {
+//         /** Optional pagination meta */
+//         pagination?: Pagination;
+//         /** Optional information message */
+//         information?: string;
+//       }
+//     : {});
+//   /** Response payload data */
+//   data: T;
+// }
+
 /**
  * Standard response envelope.
  */
-export interface ReplyEnvelope<T, Success extends boolean = boolean> {
-  meta: {
-    /** Optional debug values */
-    debug?: any[];
-    /** Status of response (SUCCESS/ERROR) */
-    status: Success extends true ? "SUCCESS" : "ERROR";
-  } & (Success extends true
-    ? {
-        /** Optional pagination meta */
+export type ReplyEnvelope<T, Success extends boolean = boolean> = Success extends true
+  ? {
+      meta: {
+        /** Response status: "SUCCESS" */
+        status: "SUCCESS";
+        /** Pagination state — only present when `.paginate()` was called with an array payload */
         pagination?: Pagination;
-        /** Optional information message */
+        /** Optional information message set via `.info()` */
         information?: string;
-      }
-    : {});
-  /** Response payload data */
-  data: T;
-}
+        /** Raw debug values — only present when `debugMode: true` */
+        debug?: any[];
+      };
+      /** The success response payload */
+      data: Exclude<T, ErrorReplyType>;
+    }
+  : {
+      meta: {
+        /** Response status: "ERROR" */
+        status: "ERROR";
+        /** Raw debug values — only present when `debugMode: true` */
+        debug?: any[];
+      };
+      /** The error response payload */
+      data: ErrorReplyType;
+    };
 
 export type PaginationOption = { limit: number; offset: number };
 

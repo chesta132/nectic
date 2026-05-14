@@ -2,8 +2,8 @@ import { pick } from "../../shared";
 import type { OutcomeEnvelope, ErrorOutcomeType, PaginationOption, OutcomeOption, OutcomeSendResult } from "./types";
 import { NectError } from "../../error";
 
-const defaultPayload = <T>(): OutcomeEnvelope<T> => ({
-  data: { code: "SERVER_ERROR", message: "Payload is empty." } as T,
+const defaultPayload = <T>(): OutcomeEnvelope<T, false> => ({
+  data: { code: "SERVER_ERROR", message: "Payload is empty." },
   meta: { status: "ERROR" },
 });
 
@@ -41,6 +41,9 @@ export class Outcome<SuccessType = unknown> {
 
   private opt: OutcomeOption;
 
+  private successMeta: OutcomeEnvelope<SuccessType, true>["meta"] = {
+    status: "SUCCESS",
+  };
   private data?: SuccessType;
   private errorData?: ErrorOutcomeType;
   private debugValue: any[] = [];
@@ -63,8 +66,12 @@ export class Outcome<SuccessType = unknown> {
   }
 
   private _finalize<S extends boolean>(success: S) {
-    this.payload.meta.status = success ? "SUCCESS" : "ERROR";
-    this.payload.data = success ? this.data : pick(this.errorData!, ["code", "message", "fields", "information"]);
+    if (success) {
+      this.payload.meta = this.successMeta;
+    } else {
+      this.payload.meta.status = "ERROR";
+    }
+    this.payload.data = (success ? this.data : pick(this.errorData!, ["code", "message", "fields", "information"])) as any;
     if (!success && this.opt.debugMode && this.debugValue.length > 0) {
       this.payload.meta.debug = this.debugValue;
     }
@@ -127,7 +134,7 @@ export class Outcome<SuccessType = unknown> {
    * ```
    */
   info(information: string) {
-    this.payload.meta = { ...this.payload.meta, information };
+    this.successMeta = { ...this.successMeta, information };
     return this;
   }
 
@@ -155,7 +162,7 @@ export class Outcome<SuccessType = unknown> {
       const { limit, offset } = meta;
       const hasNext = this.data.length >= limit;
       const nextOffset = hasNext ? offset + limit : null;
-      this.payload.meta = { ...this.payload.meta, pagination: { hasNext, nextOffset } };
+      this.successMeta = { ...this.successMeta, pagination: { hasNext, nextOffset } };
     }
     return this;
   }) as any;

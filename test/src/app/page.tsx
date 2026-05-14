@@ -70,15 +70,24 @@
 //   );
 // }
 
-import { nectAction } from "#/actions";
+import { isOutcomeError, isOutcomeSuccess, nectAction } from "#/actions";
 import { actionTest } from "@/actions/test";
 import Image from "next/image";
 
 export default async function Home() {
   // useEffect(() => {
   const f = async () => {
+    const result = await nectAction({ action: actionTest }, { id: 456, username: "chesta2" });
+    console.log("result", result.data);
+    // type test
+    if (isOutcomeError(result)) {
+      result.data;
+    }
+    if (isOutcomeSuccess(result)) {
+      result.data.f;
+    }
+
     const result2 = await nectAction({ action: actionTest, unsafe: true, fromCSR: true }, { id: 456, username: "chesta2" });
-    result2.data;
     console.log("result2", result2.data);
     // if (result2.meta.status === "ERROR") {
     //   result2.data;

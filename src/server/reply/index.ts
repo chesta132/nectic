@@ -8,7 +8,7 @@ import { NectError } from "../../error";
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const defaultPayload = <T>(): ReplyEnvelope<T> => ({
-  data: { code: "SERVER_ERROR", message: "Payload is empty." } as T,
+  data: { code: "SERVER_ERROR", message: "Payload is empty." },
   meta: { status: "ERROR" },
 });
 
@@ -43,6 +43,9 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
   private res: NectResponse;
   private opt: Omit<ReplyOption<Code>, "req" | "res">;
 
+  private successMeta: ReplyEnvelope<SuccessType, true>["meta"] = {
+    status: "SUCCESS",
+  };
   private data?: SuccessType;
   private errorData?: ErrorReplyType<Code>;
   private debugValue: any[] = [];
@@ -63,8 +66,12 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
   }
 
   private _finalize<S extends boolean>(success: S) {
-    this.payload.meta.status = success ? "SUCCESS" : "ERROR";
-    this.payload.data = success ? this.data : pick(this.errorData!, ["code", "message", "fields", "information"]);
+    if (success) {
+      this.payload.meta = this.successMeta;
+    } else {
+      this.payload.meta.status = "ERROR";
+    }
+    this.payload.data = (success ? this.data : pick(this.errorData!, ["code", "message", "fields", "information"])) as any;
     if (!success && this.opt.debugMode && this.debugValue.length > 0) {
       this.payload.meta.debug = this.debugValue;
     }
@@ -107,7 +114,7 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
    * ```
    */
   info(information: string) {
-    this.payload.meta = { ...this.payload.meta, information };
+    this.successMeta = { ...this.successMeta, information };
     return this;
   }
 
@@ -124,7 +131,7 @@ export class Reply<SuccessType = unknown, Code extends string = string> {
       const { limit, offset } = meta;
       const hasNext = this.data.length >= limit;
       const nextOffset = hasNext ? offset + limit : null;
-      this.payload.meta = { ...this.payload.meta, pagination: { hasNext, nextOffset } };
+      this.successMeta = { ...this.successMeta, pagination: { hasNext, nextOffset } };
     }
     return this;
   }) as any;

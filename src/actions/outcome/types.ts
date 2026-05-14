@@ -51,23 +51,31 @@ export interface ErrorOutcomeType {
  * }
  * ```
  */
-export interface OutcomeEnvelope<T, Success extends boolean = boolean> {
-  meta: {
-    /** Raw debug values — only present when `debugMode: true` and the action failed */
-    debug?: any[];
-    /** Response status: `"SUCCESS"` or `"ERROR"` */
-    status: Success extends true ? "SUCCESS" : "ERROR";
-  } & (Success extends true
-    ? {
+export type OutcomeEnvelope<T, Success extends boolean = boolean> = Success extends true
+  ? {
+      meta: {
+        /** Response status: "SUCCESS" */
+        status: "SUCCESS";
         /** Pagination state — only present when `.paginate()` was called with an array payload */
         pagination?: Pagination;
         /** Optional information message set via `.info()` */
         information?: string;
-      }
-    : {});
-  /** The response payload — success data or `ErrorOutcomeType` */
-  data: T;
-}
+        /** Raw debug values — only present when `debugMode: true` */
+        debug?: any[];
+      };
+      /** The success response payload */
+      data: Exclude<T, ErrorOutcomeType>;
+    }
+  : {
+      meta: {
+        /** Response status: "ERROR" */
+        status: "ERROR";
+        /** Raw debug values — only present when `debugMode: true` */
+        debug?: any[];
+      };
+      /** The error response payload */
+      data: ErrorOutcomeType;
+    };
 
 /**
  * Input for `.paginate()` — describes the current page window.
