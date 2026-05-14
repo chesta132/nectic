@@ -1,6 +1,6 @@
 {
-  "name": "nectify-js",
-  "version": "1.0.0",
+  "name": "nectic",
+  "version": "0.0.2",
   "description": "A lightweight, type-safe Next.js utility library for building API routes and server actions — supports both App Router and Pages Router.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

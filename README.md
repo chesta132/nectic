@@ -1,4 +1,4 @@
-# nectify-js
+# nectic
 
 A lightweight, type-safe Next.js utility library for building API routes and server actions — supports both **App Router** and **Pages Router**.
 
@@ -18,9 +18,9 @@ A lightweight, type-safe Next.js utility library for building API routes and ser
 ## Installation
 
 ```bash
-pnpm add nectify-js zod
+pnpm add nectic zod
 # or
-npm install nectify-js zod
+npm install nectic zod
 ```
 
 > **Peer dependencies:** `next >= 16.2.6`, `zod >= 4.4.3`
@@ -33,7 +33,7 @@ npm install nectify-js zod
 
 ```ts
 // app/api/user/route.ts
-import { createAppRouter } from "nectify-js/route";
+import { createAppRouter } from "nectic/route";
 
 export const { GET, POST } = createAppRouter({
   GET: async (req, res, ctx) => {
@@ -49,7 +49,7 @@ export const { GET, POST } = createAppRouter({
 
 ```ts
 // pages/api/user.ts
-import { createPagesRouter } from "nectify-js/route";
+import { createPagesRouter } from "nectic/route";
 
 export default createPagesRouter({
   GET: async (req, res, ctx) => {
@@ -219,7 +219,7 @@ createAppRouter(
 Catch unhandled errors globally or per method:
 
 ```ts
-import { Reply } from "nectify-js/server";
+import { Reply } from "nectic/server";
 
 export const { GET } = createAppRouter(
   { GET: handler },
@@ -235,13 +235,13 @@ export const { GET } = createAppRouter(
 
 ## Server Actions
 
-`nectify-js` also supports Next.js **Server Actions** via `nectify-js/actions`.
+`nectic` also supports Next.js **Server Actions** via `nectic/actions`.
 
 ### Creating an Action
 
 ```ts
 // actions/user.ts
-import { createNectAction } from "nectify-js/actions";
+import { createNectAction } from "nectic/actions";
 import { z } from "zod";
 
 export const getUser = createNectAction().handle(({ outcome }, id: string) => {
@@ -264,7 +264,7 @@ export const createUser = createNectAction()
 ### Calling an Action (Client Side)
 
 ```ts
-import { nectAction } from "nectify-js/actions";
+import { nectAction } from "nectic/actions";
 
 // Safe mode — always returns, check status manually
 const result = await nectAction({ action: getUser }, "user-123");
@@ -313,12 +313,12 @@ try {
 
 ## Package Exports
 
-| Import path       | Contents                                                              |
-| ----------------- | --------------------------------------------------------------------- |
-| `nectify-js`         | `NectError`                                                           |
-| `nectify-js/route`   | `createAppRouter`, `createPagesRouter`                                |
-| `nectify-js/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse` |
-| `nectify-js/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError` |
+| Import path      | Contents                                                              |
+| ---------------- | --------------------------------------------------------------------- |
+| `nectic`         | `NectError`                                                           |
+| `nectic/route`   | `createAppRouter`, `createPagesRouter`                                |
+| `nectic/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse` |
+| `nectic/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError` |
 
 ---
 
