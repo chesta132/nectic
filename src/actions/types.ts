@@ -20,7 +20,7 @@ export type ActionContext<ValidatedArgs extends readonly any[] = readonly unknow
    * @example
    * ```ts
    * const action = createNectAction()
-   *   .option({ validator: { args: [z.object({ name: z.string() })] } })
+   *   .validate([z.object({ name: z.string() })])
    *   .handle(({ outcome, validated }, raw) => {
    *     const [user] = validated; // user is { name: string }
    *     return outcome.success(user).ok();
@@ -150,7 +150,6 @@ export type ActionFunc<
  * ```ts
  * createNectAction().option({
  *   debugMode: true,
- *   validator: { args: [z.string(), z.number()] },
  * });
  * ```
  */

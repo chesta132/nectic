@@ -31,7 +31,8 @@ import { ZodType } from "zod";
  *
  * // With Zod validation and middleware
  * export const createUser = createNectAction()
- *   .option({ validator: { args: [z.object({ name: z.string() })] } })
+ *   .option({ debugMode: process.env.NODE_ENV === "development" })
+ *   .validate([z.object({ name: z.string() })])
  *   .use(async ({ next, set, validated: [user] }) => {
  *     set("role", "admin");
  *     return await next();
@@ -210,7 +211,7 @@ export class NectAction<
    * @example
    * ```ts
    * export const getUser = createNectAction()
-   *   .option({ validator: { args: [z.string()] as const } })
+   *   .validate([z.string()])
    *   .handle(({ outcome, validated: [id] }, rawId) => {
    *     if (!id) return outcome.error({ code: "NOT_FOUND", message: "User not found" }).fail();
    *     return outcome.success({ id }).ok();
@@ -248,7 +249,7 @@ export class NectAction<
  *
  * // With validation
  * export const createPost = createNectAction()
- *   .option({ validator: { args: [z.object({ title: z.string() })] as const } })
+ *   .option([z.object({ title: z.string() })])
  *   .handle(({ outcome, validated: [post] }) => {
  *     return outcome.success({ id: "new-id", ...post }).ok();
  *   });

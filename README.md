@@ -249,7 +249,8 @@ export const getUser = createNectAction().handle(({ outcome }, id: string) => {
 });
 
 export const createUser = createNectAction()
-  .option({ validator: { args: [z.object({ name: z.string() })] } })
+  .option({ debugMode: process.env.NODE_ENV === "development" })
+  .validate([z.object({ name: z.string() })])
   .use(async ({ next, set }) => {
     set("role", "admin");
     return await next();
