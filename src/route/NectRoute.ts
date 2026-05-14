@@ -27,17 +27,21 @@ export class NectRoute<Method extends AllowedMethod, Handler extends SupportedHa
   private handlers: FlattenHandlers<Handlers<Method, Handler>>;
 
   /** Global route options (debug, statusMap, cors, recover, etc.) */
-  private options?: RouteOptions<Handlers<Method, Handler>, Code>;
+  private options: RouteOptions<Handlers<Method, Handler>, Code>;
 
   /**
    * Creates a new NectRoute instance.
    *
    * @param handlers - Map from HTTP method to a handler or array of handlers
    * @param options - Global route options (optional)
+   * @default options.debugMode = process.env.NODE_ENV === "development"
    */
   constructor(handlers: Handlers<Method, Handler>, options?: RouteOptions<Handlers<Method, Handler>, Code>) {
     this.handlers = flattenHandlers(handlers);
-    this.options = options;
+    this.options = options || ({} as RouteOptions<Handlers<Method, Handler>, Code>);
+    if (this.options.debugMode === undefined) {
+      this.options.debugMode = process.env.NODE_ENV === "development";
+    }
   }
 
   /**

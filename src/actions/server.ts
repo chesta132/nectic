@@ -50,7 +50,7 @@ export class NectAction<
 > {
   private middlewares: ActionMiddlewareFunc<ValidatedArgs, ReturnType>[] = [];
   private handler?: ActionFunc<ArgsType, ValidatedArgs, ReturnType>;
-  private opt: ActionOption = {};
+  private opt: ActionOption = { debugMode: process.env.NODE_ENV === "development" };
   private validator: ZodType[] = [];
 
   constructor(middlewares?: typeof this.middlewares, handler?: typeof this.handler) {
@@ -78,7 +78,7 @@ export class NectAction<
     const next = async () => {
       const middleware = this.middlewares[i++] as ActionMiddlewareFunc<ValidatedArgs, ReturnType> | undefined;
       if (middleware) {
-        return await middleware({ ...ctx, next }, ...args as any);
+        return await middleware({ ...ctx, next }, ...(args as any));
       }
       if (this.handler && !handlerExecuted) {
         handlerExecuted = true;
@@ -121,6 +121,7 @@ export class NectAction<
    * Merges with any existing options and returns a new cloned instance.
    *
    * @param opt - Options to apply: `debugMode`.
+   * @default opt.debugMode = process.env.NODE_ENV === "development"
    * @returns A new `NectAction`
    *
    * @example
