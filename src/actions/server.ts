@@ -118,6 +118,7 @@ export class NectAction<
   clone() {
     const cloned = new NectAction(this.middlewares, this.handler);
     cloned.opt = this.opt;
+    cloned.validator = this.validator;
     return cloned;
   }
 
