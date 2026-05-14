@@ -1,3 +1,4 @@
+import { ExcludeUnserializable } from "../shared.type";
 import { NectOutcomeError } from "./error";
 import { ErrorOutcomeType, OutcomeEnvelope } from "./outcome/types";
 import { NectActionOption } from "./types";
@@ -48,12 +49,21 @@ import { NectActionOption } from "./types";
  * }
  * ```
  */
-export const nectAction = async <Args extends any[] = unknown[], Result = unknown, Unsafe extends boolean = boolean>(
-  { action, unsafe }: NectActionOption<Args, Result, Unsafe>,
+export const nectAction = async <
+  Args extends any[] = unknown[],
+  Result = unknown,
+  Unsafe extends boolean = boolean,
+  FromCSR extends boolean = boolean,
+>(
+  { action, unsafe, fromCSR }: NectActionOption<Args, Result, Unsafe, FromCSR>,
   ...args: Args
-): Promise<Unsafe extends true ? OutcomeEnvelope<Exclude<Result, ErrorOutcomeType>, true> : OutcomeEnvelope<Result | ErrorOutcomeType, boolean>> => {
+): Promise<
+  [Unsafe] extends [true]
+    ? OutcomeEnvelope<WrapFromCSR<Exclude<Result, ErrorOutcomeType>, FromCSR>, true>
+    : OutcomeEnvelope<WrapFromCSR<Result | ErrorOutcomeType, FromCSR>, boolean>
+> => {
   try {
-    const result = await action(...args);
+    const result = await action({ fromCSR: fromCSR || false }, ...args);
 
     if (result.meta.status === "ERROR" && unsafe) {
       throw new NectOutcomeError(result as OutcomeEnvelope<ErrorOutcomeType, false>);
@@ -65,3 +75,5 @@ export const nectAction = async <Args extends any[] = unknown[], Result = unknow
     return { meta: { status: "ERROR" }, data: { code: "UNHANDLED_ERROR", message: "Unhandled error", information: { err } } } as any;
   }
 };
+
+type WrapFromCSR<T, FromCSR> = [FromCSR] extends [true] ? ExcludeUnserializable<T> : T;

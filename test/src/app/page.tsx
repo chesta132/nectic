@@ -77,10 +77,8 @@ import Image from "next/image";
 export default async function Home() {
   // useEffect(() => {
   const f = async () => {
-    const result = await actionTest({ id: 123, username: "chesta" });
-    console.log("result", result);
-
-    const result2 = await nectAction({ action: actionTest, unsafe: true }, { id: 456, username: "chesta2" });
+    const result2 = await nectAction({ action: actionTest, unsafe: true, fromCSR: true }, { id: 456, username: "chesta2" });
+    result2.data;
     console.log("result2", result2.data);
     // if (result2.meta.status === "ERROR") {
     //   result2.data;

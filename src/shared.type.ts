@@ -26,3 +26,35 @@ export type IsPrefixOf<Prefix extends readonly any[], Full extends readonly any[
           : false
         : false
       : false;
+
+type IsSerializable<T> = T extends string | number | boolean | null | undefined
+  ? true
+  : T extends Function
+    ? false
+    : T extends symbol
+      ? false
+      : T extends bigint
+        ? false
+        : T extends Array<infer Item>
+          ? IsSerializable<Item>
+          : T extends object
+            ? { [K in keyof T]-?: IsSerializable<T[K]> }[keyof T] extends false
+              ? false
+              : true
+            : false;
+
+export type ExcludeUnserializable<T> = T extends string | number | boolean | null | undefined
+  ? T
+  : T extends Function
+    ? null
+    : T extends symbol
+      ? null
+      : T extends bigint
+        ? null
+        : T extends readonly [...infer Items]
+          ? { [K in keyof Items]: ExcludeUnserializable<Items[K]> }
+          : T extends Array<infer Item>
+            ? ExcludeUnserializable<Item>[]
+            : T extends object
+              ? { [K in keyof T as ExcludeUnserializable<T[K]> extends never ? never : K]: ExcludeUnserializable<T[K]> }
+              : null;

@@ -1,9 +1,10 @@
 import { omit } from "../shared";
 import { zodErrorToReplyError } from "../validator/formatZod";
 import { Outcome } from "./outcome";
-import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption } from "./types";
+import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, NectActionFunc, NectActionFuncInternalArgs } from "./types";
 import { InferZodTypeInArray, IsUnknown } from "../shared.type";
 import { ZodType } from "zod";
+import { excludeUnserializable } from "./helper";
 
 /**
  * The core server-side action builder.
@@ -89,7 +90,7 @@ export class NectAction<
     return { ...ctx, next };
   }
 
-  private async dispatch(...args: ArgsType) {
+  private dispatch = (async ({ fromCSR }: NectActionFuncInternalArgs, ...args: ArgsType) => {
     const ctx = this.createContext(args);
     if (ctx.error) {
       return ctx.outcome
@@ -98,11 +99,15 @@ export class NectAction<
         .fail();
     }
     try {
-      return await ctx.next();
+      const result = await ctx.next();
+      if (fromCSR) {
+        return excludeUnserializable(result);
+      }
+      return result;
     } catch (err) {
       return ctx.outcome.error({ code: "UNHANDLED_ERROR", message: "Unhandled error" }).debug(err).fail();
     }
-  }
+  }) as NectActionFunc<ArgsType, ReturnType>;
 
   /**
    * Returns a shallow clone of this `NectAction` instance.

@@ -11,7 +11,7 @@ export const actionTest = createNectAction()
   // });
   // .use(actionTestMw)
   .validate([user])
-  .use(actionTestMw)
+  // .use(actionTestMw)
   .handle(actionTestFunc);
 
 type Test = typeof actionTest;

@@ -12,11 +12,16 @@ export const actionTestMw: ActionMiddlewareFunc<[user: User], { user: User; vali
   return await next();
 };
 
-export const actionTestFunc: ActionFunc<[user: User], [user: User], { user: User; validated: User; fromMw: boolean }> = (
+class Test {
+  func = () => {};
+  variable = "123";
+}
+
+export const actionTestFunc: ActionFunc<[user: User], [user: User], { user: User; validated: User; fromMw: boolean; f: [() => void, Test] }> = (
   { outcome, validated: [validated], get },
   user,
 ) => {
   const u = get("user");
-  if (u) return outcome.success({ user: u as User, validated, fromMw: true }).ok();
-  return outcome.success({ user, validated, fromMw: false }).ok();
+  if (u) return outcome.success({ user: u as User, validated, fromMw: true, f: [() => {}, new Test()] }).ok();
+  return outcome.success({ user, validated, fromMw: false, f: [() => {}, new Test()] }).ok();
 };

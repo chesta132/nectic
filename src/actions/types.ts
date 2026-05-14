@@ -161,6 +161,8 @@ export type ActionOption = {
   debugMode?: boolean;
 };
 
+export type NectActionFuncInternalArgs<FromCSR extends boolean = boolean> = { fromCSR: FromCSR };
+
 /**
  * The callable function type returned by `.handle()`.
  * Represents the final dispatchable action — called like a regular async function.
@@ -176,7 +178,10 @@ export type ActionOption = {
  * const result = await getUser("user-123");
  * ```
  */
-export type NectActionFunc<Args extends any[] = unknown[], Result = unknown> = (...args: Args) => Promise<OutcomeSendResult<Result>>;
+export type NectActionFunc<Args extends readonly any[] = readonly unknown[], Result = unknown> = (
+  internalArgs: NectActionFuncInternalArgs,
+  ...args: Args
+) => Promise<OutcomeSendResult<Result>>;
 
 /**
  * Options for `nectAction()` — the client-side action caller.
@@ -195,7 +200,12 @@ export type NectActionFunc<Args extends any[] = unknown[], Result = unknown> = (
  * const result = await nectAction({ action: getUser, unsafe: true }, "user-123");
  * ```
  */
-export type NectActionOption<Args extends any[] = unknown[], Result = unknown, Unsafe extends boolean = boolean> = {
+export type NectActionOption<
+  Args extends any[] = unknown[],
+  Result = unknown,
+  Unsafe extends boolean = boolean,
+  FromCSR extends boolean = boolean,
+> = {
   /** The action function to invoke */
   action: NectActionFunc<Args, Result>;
   /**
@@ -203,4 +213,9 @@ export type NectActionOption<Args extends any[] = unknown[], Result = unknown, U
    * When `false` or omitted, always returns the `OutcomeEnvelope` regardless of status.
    */
   unsafe?: Unsafe;
+  /**
+   * When `true`, NectActions will remove all unserializable.
+   * @default false
+   */
+  fromCSR?: FromCSR;
 };
