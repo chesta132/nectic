@@ -1,8 +1,9 @@
 import { omit } from "../shared";
 import { zodErrorToReplyError } from "../validator/formatZod";
 import { Outcome } from "./outcome";
-import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption, ActionValidator } from "./types";
+import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption } from "./types";
 import { InferZodTypeInArray, IsUnknown } from "../shared.type";
+import { unknown, ZodType } from "zod";
 
 /**
  * The core server-side action builder.
@@ -41,10 +42,15 @@ import { InferZodTypeInArray, IsUnknown } from "../shared.type";
  *   });
  * ```
  */
-export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extends any[] = unknown[], ReturnType = unknown> {
+export class NectAction<
+  ArgsType extends readonly any[] = readonly unknown[],
+  ValidatedArgs extends readonly any[] = readonly unknown[],
+  ReturnType = unknown,
+> {
   private middlewares: ActionMiddlewareFunc<ValidatedArgs, ReturnType>[] = [];
   private handler?: ActionFunc<ArgsType, ValidatedArgs, ReturnType>;
   private opt: ActionOption = {};
+  private validator: ZodType[] = [];
 
   constructor(middlewares?: typeof this.middlewares, handler?: typeof this.handler) {
     this.middlewares = middlewares ?? [];
@@ -53,17 +59,15 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
 
   private createContext(args: ArgsType) {
     const outcome = new Outcome<ReturnType>({ debugMode: this.opt.debugMode });
-    const result = this.opt.validator?.args.map((validator, idx) => validator.safeParse(args[idx]));
-    if (result) {
-      const failed = result.find((r) => !r.success);
-      if (failed) {
-        return { outcome, error: zodErrorToReplyError(failed.error) };
-      }
+    const result = this.validator.map((validator, idx) => validator.safeParse(args[idx]));
+    const failed = result.find((r) => !r.success);
+    if (failed) {
+      return { outcome, error: zodErrorToReplyError(failed.error) };
     }
     const safe: Record<string, unknown> = {};
     const ctx: ActionContext<ValidatedArgs, ReturnType> = {
       outcome,
-      validated: (result?.map((r) => r.data) ?? []) as ValidatedArgs,
+      validated: (result?.map((r) => r.data) ?? []) as unknown as ValidatedArgs,
       get: (name) => safe[name],
       set: (name, value) => (safe[name] = value),
     };
@@ -112,32 +116,46 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
   }
 
   /**
-   * Configure options for this action — debug mode and/or Zod argument validators.
+   * Configure options for this action — debug mode.
    * Merges with any existing options and returns a new cloned instance.
    *
-   * When `validator.args` is provided, each schema validates the corresponding argument
-   * positionally. Validated values are available in the handler/middleware via `ctx.validated`.
-   *
-   * @template V - The validator type (used to infer `ValidatedArgs` generics)
-   * @param opt - Options to apply: `debugMode` and/or `validator`
-   * @returns A new `NectAction` instance with updated options and inferred `ValidatedArgs`
+   * @param opt - Options to apply: `debugMode`.
+   * @returns A new `NectAction`
    *
    * @example
    * ```ts
    * const action = createNectAction()
    *   .option({
    *     debugMode: true,
-   *     validator: { args: [z.object({ name: z.string() })] as const },
-   *   })
-   *   .handle(({ outcome, validated: [user] }) => {
+   *   });
+   * ```
+   */
+  option(opt: ActionOption) {
+    const cloned = this.clone();
+    cloned.opt = { ...cloned.opt, ...opt };
+    return cloned;
+  }
+
+  /**
+   * Configure arguments validator for this action.
+   *
+   * @param validator - Array of Zod schemas to validate the action arguments.
+   * @returns A new `NectAction`
+   *
+   * @example
+   * ```ts
+   * const action = createNectAction()
+   *   .validate([user])
+   *   .handle(({ outcome, validated: [user] }, userArg) => {
+   *     // userArg is not validated and clear from caller
    *     return outcome.success(user).ok(); // user is { name: string }
    *   });
    * ```
    */
-  option<V extends ActionValidator>(opt: ActionOption<V>) {
-    const cloned = this.clone() as unknown as NectAction<ArgsType, InferZodTypeInArray<V["args"]>, ReturnType>;
-    cloned.opt = { ...cloned.opt, ...opt };
-    return cloned;
+  validate<V extends readonly ZodType[]>(validator: readonly [...V]) {
+    const clonned = this.clone() as unknown as NectAction<[...InferZodTypeInArray<V>, ...unknown[]], InferZodTypeInArray<V>, ReturnType>;
+    clonned.validator = validator as any;
+    return clonned;
   }
 
   /**
@@ -202,7 +220,7 @@ export class NectAction<ArgsType extends any[] = unknown[], ValidatedArgs extend
    * const result = await getUser("user-123");
    * ```
    */
-  handle<NewArgsType extends any[] = unknown[], NewReturnType = unknown>(handler: ActionFunc<NewArgsType, ValidatedArgs, NewReturnType>) {
+  handle<NewArgsType extends ArgsType = ArgsType, NewReturnType = unknown>(handler: ActionFunc<NewArgsType, ValidatedArgs, NewReturnType>) {
     const cloned = this.clone() as unknown as NectAction<
       NewArgsType,
       ValidatedArgs,

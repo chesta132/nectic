@@ -6,7 +6,6 @@ export type {
   ActionMiddlewareContext,
   ActionMiddlewareFunc,
   ActionOption,
-  ActionValidator,
   NextFunc,
   NectActionFunc,
 } from "./types";

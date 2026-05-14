@@ -10,7 +10,7 @@ import { PromiseOrValue } from "../shared.type";
  * @template ValidatedArgs - Tuple of validated argument types (inferred from `ActionValidator`)
  * @template ReturnType - The expected success data type of the action
  */
-export type ActionContext<ValidatedArgs extends any[] = unknown[], ReturnType = unknown> = {
+export type ActionContext<ValidatedArgs extends readonly any[] = readonly unknown[], ReturnType = unknown> = {
   /** The `Outcome` builder used to shape and send the action response */
   outcome: Outcome<ReturnType>;
   /**
@@ -63,7 +63,10 @@ export type ActionContext<ValidatedArgs extends any[] = unknown[], ReturnType = 
  * @template ValidatedArgs - Tuple of validated argument types
  * @template ReturnType - The expected success data type of the action
  */
-export type ActionMiddlewareContext<ValidatedArgs extends any[] = unknown[], ReturnType = unknown> = ActionContext<ValidatedArgs, ReturnType> & {
+export type ActionMiddlewareContext<ValidatedArgs extends readonly any[] = readonly unknown[], ReturnType = unknown> = ActionContext<
+  ValidatedArgs,
+  ReturnType
+> & {
   /**
    * Calls the next middleware in the chain, or the final handler if no more middleware remain.
    * Must be awaited to ensure the chain executes correctly.
@@ -104,7 +107,7 @@ export type NextFunc = () => PromiseOrValue<any>;
  * };
  * ```
  */
-export type ActionMiddlewareFunc<ValidatedArgs extends any[] = unknown[], ReturnType = unknown> = (
+export type ActionMiddlewareFunc<ValidatedArgs extends readonly any[] = readonly unknown[], ReturnType = unknown> = (
   ctx: ActionMiddlewareContext<ValidatedArgs, ReturnType>,
   ...args: unknown[]
 ) => PromiseOrValue<OutcomeSendResult<ReturnType>>;
@@ -119,18 +122,20 @@ export type ActionMiddlewareFunc<ValidatedArgs extends any[] = unknown[], Return
  *
  * @example
  * ```ts
- * const handler: ActionFunc<[User], [User], { id: string }> = (
+ * const handler: ActionFunc<[user: User, fromAuth: boolean], [User], { id: string }> = (
  *   { outcome, validated: [validUser] },
- *   rawUser
+ *   rawUser,
+ *   fromAuth
  * ) => {
  *   return outcome.success({ id: validUser.id }).ok();
  * };
  * ```
  */
-export type ActionFunc<ArgsType extends any[] = unknown[], ValidatedArgs extends any[] = unknown[], ReturnType = unknown> = (
-  ctx: ActionContext<ValidatedArgs, ReturnType>,
-  ...args: ArgsType
-) => PromiseOrValue<OutcomeSendResult<ReturnType>>;
+export type ActionFunc<
+  ArgsType extends readonly any[] = readonly unknown[],
+  ValidatedArgs extends readonly any[] = readonly unknown[],
+  ReturnType = unknown,
+> = (ctx: ActionContext<ValidatedArgs, ReturnType>, ...args: ArgsType) => PromiseOrValue<OutcomeSendResult<ReturnType>>;
 
 /**
  * Configuration options for a `NectAction` instance.
@@ -146,32 +151,12 @@ export type ActionFunc<ArgsType extends any[] = unknown[], ValidatedArgs extends
  * });
  * ```
  */
-export type ActionOption<V extends ActionValidator = ActionValidator> = {
+export type ActionOption = {
   /**
    * When `true`, error responses will include a `debug` field in `meta`
    * containing the raw thrown value. Useful during development.
    */
   debugMode?: boolean;
-  /**
-   * Zod schemas to validate each action argument positionally.
-   * Each schema maps to the argument at the same index.
-   */
-  validator?: V;
-};
-
-/**
- * Validator config for a `NectAction`.
- * Each entry in `args` is a Zod schema that validates the corresponding argument.
- *
- * @example
- * ```ts
- * const validator: ActionValidator = {
- *   args: [z.object({ name: z.string() }), z.number()],
- * };
- * ```
- */
-export type ActionValidator = {
-  readonly args: ZodType[];
 };
 
 /**
