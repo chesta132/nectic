@@ -44,11 +44,7 @@ import { excludeUnserializable } from "./helper";
  *   });
  * ```
  */
-export class NectAction<
-  ArgsType extends readonly any[] = readonly unknown[],
-  ValidatedArgs extends readonly any[] = readonly unknown[],
-  ReturnType = unknown,
-> {
+export class NectAction<ArgsType extends readonly any[] = readonly unknown[], ValidatedArgs extends any[] = [], ReturnType = unknown> {
   private middlewares: ActionMiddlewareFunc<ValidatedArgs, ReturnType>[] = [];
   private handler?: ActionFunc<ArgsType, ValidatedArgs, ReturnType>;
   private opt: ActionOption = { debugMode: process.env.NODE_ENV === "development" };

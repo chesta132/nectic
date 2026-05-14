@@ -2,7 +2,7 @@
 
 import { createNectAction } from "#/actions";
 import { User, user } from "@/validator/zod";
-import { actionTestFunc, actionTestMw } from "./funcs";
+import { actionTestFunc, actionTestFuncZeroArgs, actionTestMw } from "./funcs";
 
 export const actionTest = createNectAction()
   // .option({ validator: { args: [user] as const } })
@@ -15,3 +15,5 @@ export const actionTest = createNectAction()
   .handle(actionTestFunc);
 
 type Test = typeof actionTest;
+
+export const actionTestZeroArgs = createNectAction().handle(actionTestFuncZeroArgs);

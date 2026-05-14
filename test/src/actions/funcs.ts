@@ -25,3 +25,7 @@ export const actionTestFunc: ActionFunc<[user: User], [user: User], { user: User
   if (u) return outcome.success({ user: u as User, validated, fromMw: true, f: [() => {}, new Test()] }).ok();
   return outcome.success({ user, validated, fromMw: false, f: [() => {}, new Test()] }).ok();
 };
+
+export const actionTestFuncZeroArgs: ActionFunc<[], [], { success: boolean; user: User }> = ({ outcome }) => {
+  return outcome.success({ success: true, user: { id: 123, username: "1234" } }).ok();
+};
