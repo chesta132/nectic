@@ -3,7 +3,7 @@ import { zodErrorToReplyError } from "../validator/formatZod";
 import { Outcome } from "./outcome";
 import { ActionContext, ActionFunc, ActionMiddlewareFunc, ActionOption } from "./types";
 import { InferZodTypeInArray, IsUnknown } from "../shared.type";
-import { unknown, ZodType } from "zod";
+import { ZodType } from "zod";
 
 /**
  * The core server-side action builder.
@@ -77,11 +77,11 @@ export class NectAction<
     const next = async () => {
       const middleware = this.middlewares[i++] as ActionMiddlewareFunc<ValidatedArgs, ReturnType> | undefined;
       if (middleware) {
-        return await middleware({ ...ctx, next }, ...args);
+        return await middleware({ ...ctx, next }, ...args as any);
       }
       if (this.handler && !handlerExecuted) {
         handlerExecuted = true;
-        return await this.handler(ctx, ...args);
+        return await (this.handler as Function)(ctx, ...args);
       }
       return ctx.outcome.error({ code: "UNHANDLED_ERROR", message: "No handler" }).fail();
     };
