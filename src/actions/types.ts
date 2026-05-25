@@ -186,18 +186,6 @@ export type NectActionFunc<Args extends readonly any[] = readonly unknown[], Res
  * Options for `nectAction()` — the client-side action caller.
  * Wraps a `NectActionFunc` and optionally enables `unsafe` mode.
  *
- * @template Args - Tuple of argument types the action accepts
- * @template Result - The success data type of the action
- * @template Unsafe - If `true`, throws `NectOutcomeError` on error responses instead of returning them
- *
- * @example
- * ```ts
- * // Safe mode (default): returns the envelope regardless of success/error
- * const result = await nectAction({ action: getUser }, "user-123");
- *
- * // Unsafe mode: throws NectOutcomeError if the action returns an error
- * const result = await nectAction({ action: getUser, unsafe: true }, "user-123");
- * ```
  */
 export type NectActionOption<
   Args extends any[] = unknown[],

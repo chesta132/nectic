@@ -9,7 +9,7 @@ import { ErrorOutcomeType, OutcomeEnvelope } from "./outcome/types";
  * @example
  * ```ts
  * try {
- *   const result = await nectAction({ action: getUser, unsafe: true }, "user-123");
+ *   const result = await nectAction(getUser, { unsafe: true })("user-123");
  *   console.log(result.data); // { id: "user-123" }
  * } catch (err) {
  *   if (err instanceof NectOutcomeError) {

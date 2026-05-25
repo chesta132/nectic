@@ -201,7 +201,7 @@ export class NectAction<ArgsType extends readonly any[] = readonly unknown[], Va
    * Finalize the action with a handler function and return the dispatchable action.
    *
    * Calling `.handle()` locks the builder — it returns a plain async function
-   * (not a `NectAction`) that can be called directly or passed to `nectAction()`.
+   * (not a `NectAction`) that can be passed to `nectAction()`.
    *
    * The handler receives `ActionContext` (without `next`) and the raw action arguments.
    * It must return a result from `outcome.ok()`, `outcome.fail()`, or `outcome.respond()`.
@@ -219,9 +219,6 @@ export class NectAction<ArgsType extends readonly any[] = readonly unknown[], Va
    *     if (!id) return outcome.error({ code: "NOT_FOUND", message: "User not found" }).fail();
    *     return outcome.success({ id }).ok();
    *   });
-   *
-   * // Call it directly
-   * const result = await getUser("user-123");
    * ```
    */
   handle<NewArgsType extends ArgsType = ArgsType, NewReturnType = unknown>(handler: ActionFunc<NewArgsType, ValidatedArgs, NewReturnType>) {

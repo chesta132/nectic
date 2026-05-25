@@ -261,13 +261,17 @@ export const createUser = createNectAction()
   });
 ```
 
-### Calling an Action (Client Side)
+### Calling an Action (Component - SSR/CSR)
 
 ```ts
+// New nectAction API
+// returns callable function
 import { nectAction } from "nectic/actions";
+import { useActionState } from "react";
 
 // Safe mode — always returns, check status manually
-const result = await nectAction({ action: getUser }, "user-123");
+const getUser = nectAction(getUserAction);
+const result = await getUser("user-123");
 if (result.meta.status === "ERROR") {
   console.error(result.data.message);
 } else {
@@ -275,8 +279,35 @@ if (result.meta.status === "ERROR") {
 }
 
 // Unsafe mode — throws NectOutcomeError on error
+// CSR mode — removes unserializable data
+const [user, getUser, isPending] = useActionState(nectAction(getUserAction, { unsafe: true, fromCSR: true }), DEFAULT_USER);
+// ...
 try {
-  const result = await nectAction({ action: getUser, unsafe: true }, "user-123");
+  const result = getUser("user-123");
+  console.log(result.data);
+} catch (err) {
+  if (err instanceof NectOutcomeError) {
+    console.error(err.data.code);
+  }
+}
+```
+
+```ts
+// Legacy nectAction API
+import { nectAction } from "nectic/actions";
+
+// Safe mode — always returns, check status manually
+const result = await nectAction({ action: getUserAction }, "user-123");
+if (result.meta.status === "ERROR") {
+  console.error(result.data.message);
+} else {
+  console.log(result.data);
+}
+
+// Unsafe mode — throws NectOutcomeError on error
+// CSR mode — removes unserializable data
+try {
+  const result = await nectAction({ action: getUserAction, unsafe: true }, "user-123");
   console.log(result.data);
 } catch (err) {
   if (err instanceof NectOutcomeError) {
