@@ -210,6 +210,7 @@ export type NectActionOption<
   /**
    * When `true`, throws a `NectOutcomeError` if the action returns an error envelope.
    * When `false` or omitted, always returns the `OutcomeEnvelope` regardless of status.
+   * @default false
    */
   unsafe?: Unsafe;
   /**
