@@ -29,6 +29,12 @@
       "require": "./dist/actions/index.js",
       "default": "./dist/actions/index.mjs",
       "types": "./dist/actions/index.d.ts"
+    },
+    "./proxy": {
+      "import": "./dist/proxy/index.mjs",
+      "require": "./dist/proxy/index.js",
+      "default": "./dist/proxy/index.mjs",
+      "types": "./dist/proxy/index.d.ts"
     }
   },
   "type": "module",
