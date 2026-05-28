@@ -12,6 +12,7 @@ A lightweight, type-safe Next.js utility library for building API routes and ser
 - ⚡ **Server Actions** support with middleware and validation
 - 🛡️ Unified error recovery via `recover`
 - 🔒 Type-safe request/response via `NectRequest` & `NectResponse`
+- 🔁 **Middleware proxy chain** via `NectProxy` for Next.js middleware
 
 ---
 
@@ -318,6 +319,80 @@ try {
 
 ---
 
+## Proxy Middleware
+
+`nectic` provides a composable middleware proxy chain for Next.js middleware via `nectic/proxy`.
+
+### `createNectProxy()`
+
+Creates a new `NectProxy` instance. Register handlers with `.use()` and export the result of `.handle()` as your Next.js middleware.
+
+```ts
+// middleware.ts
+import { createNectProxy } from "nectic/proxy";
+
+export default createNectProxy()
+  .use(loggingProxy)
+  .use([authProxy, extractIdProxy], { matcher: /^\/dashboard/ })
+  .use(i18nProxy, { matcher: (req) => req.nextUrl.host === PUBLIC_HOST })
+  .handle();
+```
+
+### `.use(proxy, option?)`
+
+Registers one or more proxy handlers into the chain. An optional `matcher` scopes when they run.
+
+```ts
+// Single proxy, always runs
+proxy.use(myHandler);
+
+// Multiple proxies, scoped to a path
+proxy.use([authProxy, roleProxy], { matcher: /^\/admin/ });
+
+// Custom function matcher (async supported)
+proxy.use(localeProxy, { matcher: (req) => req.getHeader("accept-language")?.startsWith("id") ?? false });
+```
+
+### Proxy Handler Signature
+
+Each proxy handler receives `(req, event, ctx)`:
+
+```ts
+import { NextResponse } from "next/server";
+import type { NectProxyFunc } from "nectic/proxy";
+
+const authProxy: NectProxyFunc = async (req, event, ctx) => {
+  const token = req.getCookie("token");
+  if (!token) {
+    return Response.redirect(new URL("/login", req.url));
+  }
+
+  // Call next proxy in chain
+  if (ctx.isHasNext()) {
+    return await ctx.next();
+  } else {
+    return NextResponse.next();
+  }
+};
+```
+
+| Parameter       | Type               | Description                                    |
+| --------------- | ------------------ | ---------------------------------------------- |
+| `req`           | `NectRequest`      | Unified request wrapper (same as route/server) |
+| `event`         | `NextFetchEvent`   | Next.js fetch event                            |
+| `ctx.next`      | `() => Promise<…>` | Calls the next matched proxy in chain          |
+| `ctx.isHasNext` | `() => boolean`    | Returns `true` if there are more proxies ahead |
+
+### Matcher Types
+
+| Matcher Type | Example                                       | Behavior                             |
+| ------------ | --------------------------------------------- | ------------------------------------ |
+| `RegExp`     | `/^\/api/`                                    | Tests against `req.nextUrl.pathname` |
+| `function`   | `(req, event) => boolean \| Promise<boolean>` | Custom sync or async match logic     |
+| _(omitted)_  | —                                             | Matches all requests                 |
+
+---
+
 ## `NectRequest` API
 
 `NectRequest` is a unified request wrapper that works across both routers.
@@ -344,12 +419,13 @@ try {
 
 ## Package Exports
 
-| Import path      | Contents                                                              |
-| ---------------- | --------------------------------------------------------------------- |
-| `nectic`         | `NectError`                                                           |
-| `nectic/route`   | `createAppRouter`, `createPagesRouter`                                |
-| `nectic/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse` |
-| `nectic/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError` |
+| Import path      | Contents                                                                       |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `nectic`         | `NectError`                                                                    |
+| `nectic/route`   | `createAppRouter`, `createPagesRouter`                                         |
+| `nectic/server`  | `NectRequest`, `NectResponse`, `Reply`, `nectRequest`, `nectResponse`          |
+| `nectic/actions` | `createNectAction`, `nectAction`, `createOutcome`, `NectOutcomeError`          |
+| `nectic/proxy`   | `NectProxy`, `createNectProxy`, `NectProxyFunc`, `Matcher`, `NectProxyContext` |
 
 ---
 
