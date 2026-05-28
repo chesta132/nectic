@@ -46,8 +46,8 @@ export type RecoverFunc<Handler extends SupportedHandlers> = (
  */
 export type CORSFunc = (origin: string) => boolean | CORSObjOpt | Promise<CORSObjOpt | boolean>;
 
-/** Return type of `next()` — either void or Promise<void> */
-export type NextResult = PromiseOrValue<void>;
+/** Return type of `next()` */
+export type NextResult = PromiseOrValue<NectSendResult | NextResponse | Response | void>;
 
 /**
  * The `next()` function used inside a middleware/handler chain
