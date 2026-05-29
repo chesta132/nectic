@@ -1,4 +1,4 @@
-import { NextFetchEvent, NextProxy } from "next/server";
+import { NextFetchEvent, NextProxy, NextResponse } from "next/server";
 import { nectRequest, NectRequest } from "../server";
 import { NectProxyContext, NectProxyFunc, ProxyList, UseOption } from "./types";
 
@@ -92,6 +92,9 @@ export class NectProxy {
         }
       }
 
+      if (matchedProxies.length === 0) {
+        return NextResponse.next();
+      }
       const ctx = this.createContext(req, event, matchedProxies);
       return await ctx.next();
     };
